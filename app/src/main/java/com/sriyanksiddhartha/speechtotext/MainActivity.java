@@ -11,15 +11,46 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
+import java.util.Calendar;
+import java.util.Date;
+
+
+
 public class MainActivity extends AppCompatActivity {
 
 	private TextView txvResult;
+	private TextToSpeech mTTS;
+	private String mText;
+	private String askTime = "what is the time";
+	private String askDate = "what is the date";
+	private String response = "please ask me what is the time or what is the date";
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		txvResult = (TextView) findViewById(R.id.txvResult);
+
+
+		mTTS = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+			@Override
+			public void onInit(int status) {
+				if (status == TextToSpeech.SUCCESS) {
+					int result = mTTS.setLanguage(Locale.getDefault());
+					if (result == TextToSpeech.LANG_MISSING_DATA
+							|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
+						Log.e("TTS", "Language not supported");
+					} else {
+						// TODO
+					}
+				} else {
+					Log.e("TTS", "Initialization failed");
+				}
+			}
+		});
 	}
 
 	public void getSpeechInput(View view) {
@@ -43,9 +74,28 @@ public class MainActivity extends AppCompatActivity {
 			case 10:
 				if (resultCode == RESULT_OK && data != null) {
 					ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+					//Date currentTime = Calendar.getInstance().getTime();
 					txvResult.setText(result.get(0));
+					//txvResult.setText(currentTime.toString());
+					mText = result.get(0);
+					speak();
+
 				}
 				break;
+		}
+	}
+
+	private void speak() {
+		Date currentTime = Calendar.getInstance().getTime();
+		String [] splitStr = currentTime.toString().split("\\s+");
+		String date = splitStr[0]+" "+splitStr[1]+" "+splitStr[2]+" "+splitStr[5];
+		String time = splitStr[3];
+		if(mText.equals(askTime)){
+			mTTS.speak(time, TextToSpeech.QUEUE_FLUSH, null);
+		}else if(mText.equals(askDate)){
+			mTTS.speak(date, TextToSpeech.QUEUE_FLUSH, null);
+		}else{
+		mTTS.speak(response, TextToSpeech.QUEUE_FLUSH, null);
 		}
 	}
 }
